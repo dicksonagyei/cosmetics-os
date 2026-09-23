@@ -12,6 +12,14 @@ import {
   StockAdjustmentReason,
   CsvImportProductRow,
 } from '../types/pos';
+import {
+  Warehouse,
+  Branch,
+  FinancialAccount,
+  StockTransfer,
+  StockTransferItem,
+  OnboardingState,
+} from '../types/tenant';
 import { buildReceiptEscPos } from './escpos';
 
 // Check if running inside native Tauri runtime
@@ -639,6 +647,234 @@ let mockAdjustmentRequests: StockAdjustmentRequest[] = [
   },
 ];
 
+// Multi-Tenant, Warehouse, Branch, and Supply Chain Mock Stores
+let mockOnboarding: OnboardingState = {
+  is_completed: true,
+  current_step: 8,
+  account: {
+    id: 'usr_owner_01',
+    email: 'pius@cosmenply.com',
+    full_name: 'Pius Agyei',
+    phone: '+233 24 555 0192',
+    role: 'STORE_OWNER',
+    created_at: new Date().toISOString(),
+  },
+  business: {
+    business_name: 'Cosmenply Luxury Beauty Group',
+    trade_name: 'Cosmenply',
+    business_structure: 'ENTERPRISE_RETAIL_CHAIN',
+    registration_number: 'BN-GH-2026-99120',
+    tax_identification_number: 'TIN-GH-0091823-X',
+    base_currency: 'GHS',
+    currency_symbol: '₵',
+    support_email: 'support@cosmenply.com',
+    support_phone: '+233 24 555 0192',
+    headquarters_address: 'Plot 4, Spintex Road Industrial Area, Accra, Ghana',
+    logo_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=150&q=80',
+  },
+  owner: {
+    owner_full_name: 'Pius Agyei',
+    id_type: 'PASSPORT',
+    id_number: 'GHA-09918239-A',
+    date_of_birth: '1992-04-18',
+    nationality: 'Ghanaian',
+    residential_address: 'Airport Residential Area, Accra',
+    emergency_phone: '+233 20 888 1234',
+  },
+  warehouses: [
+    {
+      id: 'wh_central_01',
+      name: 'Central Logistics & Distribution Hub (Spintex)',
+      code: 'WH-ACC-SPINTEX-01',
+      address: 'Spintex Warehouse Block C, Heavy Industrial Area, Accra',
+      capacity_sqft: 15000,
+      manager_name: 'Kwame Mensah (Hub Supervisor)',
+      manager_phone: '+233 24 111 2233',
+      is_central_hub: true,
+      total_skus: 145,
+      total_units: 4200,
+    },
+    {
+      id: 'wh_north_02',
+      name: 'Ashanti Regional Restock Depot (Kumasi)',
+      code: 'WH-KUM-DEPOT-02',
+      address: 'Asokwa Logistics Park, Kumasi',
+      capacity_sqft: 8500,
+      manager_name: 'Akua Serwaa',
+      manager_phone: '+233 27 444 5566',
+      is_central_hub: false,
+      total_skus: 90,
+      total_units: 1850,
+    },
+  ],
+  branches: [
+    {
+      id: 'br_accra_mall_01',
+      name: 'Cosmenply Flagship Store - Accra Mall',
+      code: 'BR-ACC-MALL-01',
+      address: 'Shop GF-14, Ground Floor, Accra Mall, Tetteh Quarshie Interchange',
+      assigned_warehouse_id: 'wh_central_01',
+      pos_registers_count: 3,
+      manager_name: 'Ama Boateng',
+      manager_phone: '+233 24 333 4455',
+      status: 'ACTIVE',
+    },
+    {
+      id: 'br_osu_oxford_02',
+      name: 'Cosmenply Boutique - Osu Oxford Street',
+      code: 'BR-ACC-OSU-02',
+      address: 'Oxford Street Commercial Strip, Osu, Accra',
+      assigned_warehouse_id: 'wh_central_01',
+      pos_registers_count: 2,
+      manager_name: 'Kofi Owusu',
+      manager_phone: '+233 20 777 8899',
+      status: 'ACTIVE',
+    },
+    {
+      id: 'br_kumasi_city_03',
+      name: 'Cosmenply Retail - Kumasi City Mall',
+      code: 'BR-KUM-MALL-03',
+      address: 'Shop L1-09, Kumasi City Mall, Asokwa',
+      assigned_warehouse_id: 'wh_north_02',
+      pos_registers_count: 2,
+      manager_name: 'Abena Mansa',
+      manager_phone: '+233 26 999 0011',
+      status: 'ACTIVE',
+    },
+  ],
+  financial_accounts: [
+    {
+      id: 'fin_ecobank_01',
+      account_type: 'BANK',
+      provider_name: 'Ecobank Ghana Ltd',
+      account_holder_name: 'Cosmenply Luxury Beauty Group Ltd',
+      account_number: '1441002938102',
+      branch_sort_code: 'ECOBGHAC',
+      currency: 'GHS',
+      is_primary_settlement: true,
+      auto_payout_frequency: 'INSTANT_DAILY',
+    },
+    {
+      id: 'fin_momo_02',
+      account_type: 'MOMO',
+      provider_name: 'MTN Mobile Money Merchant',
+      account_holder_name: 'Cosmenply Retail POS Settler',
+      account_number: '059 888 7766 (Till: 491022)',
+      currency: 'GHS',
+      is_primary_settlement: false,
+      auto_payout_frequency: 'INSTANT_DAILY',
+    },
+    {
+      id: 'fin_stripe_03',
+      account_type: 'PAYMENT_GATEWAY',
+      provider_name: 'Paystack / Stripe Enterprise',
+      account_holder_name: 'Cosmenply Online & POS Terminals',
+      account_number: 'pk_live_cosmenply_99182391023',
+      currency: 'USD',
+      is_primary_settlement: false,
+      auto_payout_frequency: 'INSTANT_DAILY',
+    },
+  ],
+  catalog_import_choice: 'MASTER_CATALOG',
+  created_at: new Date().toISOString(),
+};
+
+let mockStockTransfers: StockTransfer[] = [
+  {
+    id: 'tr_2026_001',
+    transfer_number: 'TR-2026-0089',
+    source_warehouse_id: 'wh_central_01',
+    source_warehouse_name: 'Central Logistics & Distribution Hub (Spintex)',
+    destination_branch_id: 'br_accra_mall_01',
+    destination_branch_name: 'Cosmenply Flagship Store - Accra Mall',
+    items: [
+      {
+        variant_id: 'var_fenty_420',
+        product_name: "Pro Filt'r Soft Matte Longwear Foundation",
+        brand: 'Fenty Beauty',
+        shade_name: 'Shade #420 (Deep Neutral)',
+        sku: 'FB-PF-420',
+        quantity_dispatched: 30,
+        quantity_received: 30,
+        quantity_variance: 0,
+        unit_cost_cents: 1900,
+      },
+      {
+        variant_id: 'var_huda_cherry',
+        product_name: 'Easy Bake Loose Baking & Setting Powder',
+        brand: 'Huda Beauty',
+        shade_name: 'Cherry Blossom',
+        sku: 'HB-EB-CHRY',
+        quantity_dispatched: 25,
+        quantity_received: 25,
+        quantity_variance: 0,
+        unit_cost_cents: 1800,
+      },
+      {
+        variant_id: 'var_rare_joy',
+        product_name: 'Soft Pinch Liquid Blush',
+        brand: 'Rare Beauty',
+        shade_name: 'Joy (Dewy Peach)',
+        sku: 'RB-SPB-JOY',
+        quantity_dispatched: 20,
+        quantity_received: 20,
+        quantity_variance: 0,
+        unit_cost_cents: 1200,
+      },
+    ],
+    status: 'ACCEPTED',
+    dispatched_by: 'Kwame Mensah (Logistics Officer)',
+    dispatched_at: '2026-09-22T08:30:00Z',
+    received_by: 'Ama Boateng (Store Manager)',
+    received_at: '2026-09-22T11:45:00Z',
+    driver_name: 'Samuel Osei (Van Driver)',
+    vehicle_registration: 'GN-4892-24',
+    evidence_attachment_url: 'https://images.unsplash.com/photo-1586528116311-ad8dd3c8310d?auto=format&fit=crop&w=400&q=80',
+    notes: 'Replenishment for Weekend Sephora Beauty Promo at Accra Mall. Verified & undamaged.',
+    total_units_dispatched: 75,
+    total_units_received: 75,
+  },
+  {
+    id: 'tr_2026_002',
+    transfer_number: 'TR-2026-0090',
+    source_warehouse_id: 'wh_central_01',
+    source_warehouse_name: 'Central Logistics & Distribution Hub (Spintex)',
+    destination_branch_id: 'br_osu_oxford_02',
+    destination_branch_name: 'Cosmenply Boutique - Osu Oxford Street',
+    items: [
+      {
+        variant_id: 'var_dior_001',
+        product_name: 'Dior Addict Lip Glow Oil',
+        brand: 'Dior Beauty',
+        shade_name: '001 Pink',
+        sku: 'CD-LGO-001',
+        quantity_dispatched: 15,
+        quantity_received: 0,
+        quantity_variance: -15,
+        unit_cost_cents: 2000,
+      },
+      {
+        variant_id: 'var_nars_custard',
+        product_name: 'Radiant Creamy Concealer',
+        brand: 'NARS Cosmetics',
+        shade_name: 'Custard (Medium 1)',
+        sku: 'NARS-RCC-CUST',
+        quantity_dispatched: 20,
+        quantity_received: 0,
+        quantity_variance: -20,
+        unit_cost_cents: 1400,
+      },
+    ],
+    status: 'IN_TRANSIT',
+    dispatched_by: 'Kwame Mensah (Logistics Officer)',
+    dispatched_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    driver_name: 'Daniel Appiah (Dispatch Dispatcher)',
+    vehicle_registration: 'GT-2019-25',
+    notes: 'Urgent restock of Lip Glow and Concealers before evening rush hour.',
+    total_units_dispatched: 35,
+  },
+];
+
 export const api = {
   async getVariants(): Promise<VariantDetail[]> {
     if (isTauri()) {
@@ -1174,6 +1410,208 @@ export const api = {
     }
     console.log(`[ESC/POS Thermal Print Simulated] Sending ${bytes.length} bytes to printer.`);
     return true;
+  },
+
+  // Onboarding & Tenant APIs
+  async getTenantOnboarding(): Promise<OnboardingState> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<OnboardingState>('get_tenant_onboarding');
+    }
+    return { ...mockOnboarding };
+  },
+
+  async saveTenantOnboarding(data: Partial<OnboardingState>): Promise<OnboardingState> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<OnboardingState>('save_tenant_onboarding', { data });
+    }
+    mockOnboarding = {
+      ...mockOnboarding,
+      ...data,
+      is_completed: data.is_completed ?? mockOnboarding.is_completed,
+    };
+    return { ...mockOnboarding };
+  },
+
+  // Warehouses & Branches APIs
+  async getWarehouses(): Promise<Warehouse[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<Warehouse[]>('get_warehouses');
+    }
+    return [...mockOnboarding.warehouses];
+  },
+
+  async createWarehouse(data: Omit<Warehouse, 'id'>): Promise<Warehouse> {
+    const newWh: Warehouse = {
+      ...data,
+      id: `wh_${Date.now()}`,
+    };
+    mockOnboarding.warehouses.push(newWh);
+    return newWh;
+  },
+
+  async getBranches(): Promise<Branch[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<Branch[]>('get_branches');
+    }
+    return [...mockOnboarding.branches];
+  },
+
+  async createBranch(data: Omit<Branch, 'id'>): Promise<Branch> {
+    const newBr: Branch = {
+      ...data,
+      id: `br_${Date.now()}`,
+    };
+    mockOnboarding.branches.push(newBr);
+    return newBr;
+  },
+
+  // Inter-Branch Stock Transfers (Alibaba Supply-Chain Model)
+  async getStockTransfers(): Promise<StockTransfer[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<StockTransfer[]>('get_stock_transfers');
+    }
+    return [...mockStockTransfers];
+  },
+
+  async createStockTransfer(data: {
+    source_warehouse_id: string;
+    destination_branch_id: string;
+    items: { variant_id: string; quantity: number }[];
+    driver_name?: string;
+    vehicle_registration?: string;
+    notes?: string;
+  }): Promise<StockTransfer> {
+    const sourceWh = mockOnboarding.warehouses.find((w) => w.id === data.source_warehouse_id);
+    const destBr = mockOnboarding.branches.find((b) => b.id === data.destination_branch_id);
+
+    const transferItems: StockTransferItem[] = data.items.map((it) => {
+      const variant = mockVariants.find((v) => v.id === it.variant_id);
+      return {
+        variant_id: it.variant_id,
+        product_name: variant?.product_name || 'Cosmetic Product',
+        brand: variant?.brand || 'Brand',
+        shade_name: variant?.shade_name,
+        sku: variant?.sku || 'SKU-00',
+        quantity_dispatched: it.quantity,
+        quantity_received: 0,
+        quantity_variance: -it.quantity,
+        unit_cost_cents: variant?.cost_price_cents || 1500,
+      };
+    });
+
+    const totalDispatched = transferItems.reduce((sum, item) => sum + item.quantity_dispatched, 0);
+
+    const newTransfer: StockTransfer = {
+      id: `tr_${Date.now()}`,
+      transfer_number: `TR-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      source_warehouse_id: data.source_warehouse_id,
+      source_warehouse_name: sourceWh?.name || 'Central Warehouse',
+      destination_branch_id: data.destination_branch_id,
+      destination_branch_name: destBr?.name || 'Retail Branch',
+      items: transferItems,
+      status: 'DISPATCHED',
+      dispatched_by: 'Logistics Dispatcher (Kwame)',
+      dispatched_at: new Date().toISOString(),
+      driver_name: data.driver_name,
+      vehicle_registration: data.vehicle_registration,
+      notes: data.notes,
+      total_units_dispatched: totalDispatched,
+    };
+
+    mockStockTransfers.unshift(newTransfer);
+
+    // Deduct stock from Central Warehouse simulation
+    mockSyncQueue.push({
+      id: `sync_tr_dispatch_${Date.now()}`,
+      event_type: 'STOCK_TRANSFER_DISPATCHED',
+      payload: JSON.stringify(newTransfer),
+      created_at: new Date().toISOString(),
+      status: 'PENDING',
+      retry_count: 0,
+    });
+
+    return newTransfer;
+  },
+
+  async receiveStockTransfer(
+    transferId: string,
+    receivedItems: { variant_id: string; quantity_received: number }[],
+    evidenceUrl?: string,
+    notes?: string,
+    receivedBy = 'Store Manager (Ama)'
+  ): Promise<StockTransfer> {
+    const transfer = mockStockTransfers.find((t) => t.id === transferId);
+    if (!transfer) throw new Error('Transfer not found');
+
+    let totalRec = 0;
+    transfer.items = transfer.items.map((item) => {
+      const rec = receivedItems.find((r) => r.variant_id === item.variant_id);
+      const qtyRec = rec ? rec.quantity_received : item.quantity_dispatched;
+      totalRec += qtyRec;
+      return {
+        ...item,
+        quantity_received: qtyRec,
+        quantity_variance: qtyRec - item.quantity_dispatched,
+      };
+    });
+
+    transfer.status = 'RECEIVED';
+    transfer.received_by = receivedBy;
+    transfer.received_at = new Date().toISOString();
+    transfer.evidence_attachment_url = evidenceUrl;
+    if (notes) transfer.notes = `${transfer.notes || ''} | Intake Notes: ${notes}`;
+    transfer.total_units_received = totalRec;
+
+    return transfer;
+  },
+
+  async acceptStockTransfer(transferId: string): Promise<StockTransfer> {
+    const transfer = mockStockTransfers.find((t) => t.id === transferId);
+    if (!transfer) throw new Error('Transfer not found');
+
+    transfer.status = 'ACCEPTED';
+
+    // Credit branch inventory in SQLite
+    transfer.items.forEach((it) => {
+      const existing = mockVariants.find((v) => v.id === it.variant_id);
+      if (existing) {
+        existing.quantity_on_hand += it.quantity_received;
+      }
+    });
+
+    mockSyncQueue.push({
+      id: `sync_tr_accept_${Date.now()}`,
+      event_type: 'STOCK_TRANSFER_ACCEPTED',
+      payload: JSON.stringify(transfer),
+      created_at: new Date().toISOString(),
+      status: 'PENDING',
+      retry_count: 0,
+    });
+
+    return transfer;
+  },
+
+  // Financial & Settlement APIs
+  async getFinancialAccounts(): Promise<FinancialAccount[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<FinancialAccount[]>('get_financial_accounts');
+    }
+    return [...mockOnboarding.financial_accounts];
+  },
+
+  async createFinancialAccount(data: Omit<FinancialAccount, 'id'>): Promise<FinancialAccount> {
+    const newAcc: FinancialAccount = {
+      ...data,
+      id: `fin_${Date.now()}`,
+    };
+    mockOnboarding.financial_accounts.push(newAcc);
+    return newAcc;
   },
 };
 

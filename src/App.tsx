@@ -10,6 +10,13 @@ import {
   MasterCatalogProduct,
   StockAdjustmentRequest,
 } from './types/pos';
+import {
+  OnboardingState,
+  Warehouse,
+  Branch,
+  StockTransfer,
+  FinancialAccount,
+} from './types/tenant';
 import { api } from './utils/tauriBridge';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { Header } from './components/layout/Header';
@@ -24,9 +31,13 @@ import { NewCustomerModal } from './components/pos/NewCustomerModal';
 import { InventoryView } from './components/inventory/InventoryView';
 import { CustomerLedgerView } from './components/customer/CustomerLedgerView';
 import { SyncStatusView } from './components/sync/SyncStatusView';
+import { SupplyChainView } from './components/supply_chain/SupplyChainView';
+import { OnboardingWizardModal } from './components/onboarding/OnboardingWizardModal';
 
 export function App() {
-  const [activeTab, setActiveTab] = useState<'pos' | 'inventory' | 'customers' | 'sync'>('pos');
+  const [activeTab, setActiveTab] = useState<
+    'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync'
+  >('pos');
   const [variants, setVariants] = useState<VariantDetail[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [cart, setCart] = useState<CartItem[]>([]);
@@ -34,6 +45,14 @@ export function App() {
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
   const [masterProducts, setMasterProducts] = useState<MasterCatalogProduct[]>([]);
   const [stockAdjustmentRequests, setStockAdjustmentRequests] = useState<StockAdjustmentRequest[]>([]);
+
+  // Multi-Tenant, Logistics & Supply Chain State
+  const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [branches, setBranches] = useState<Branch[]>([]);
+  const [stockTransfers, setStockTransfers] = useState<StockTransfer[]>([]);
+  const [, setFinancialAccounts] = useState<FinancialAccount[]>([]);
 
   // Modals state
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -46,18 +65,39 @@ export function App() {
   // Load initial data from SQLite via Tauri Bridge
   const loadData = useCallback(async () => {
     try {
-      const [vars, custs, sync, master, adjustments] = await Promise.all([
+      const [
+        vars,
+        custs,
+        sync,
+        master,
+        adjustments,
+        onboarding,
+        whs,
+        brs,
+        transfers,
+        finances,
+      ] = await Promise.all([
         api.getVariants(),
         api.getCustomers(),
         api.getSyncQueue(),
         api.getMasterCatalog(),
         api.getStockAdjustmentRequests(),
+        api.getTenantOnboarding(),
+        api.getWarehouses(),
+        api.getBranches(),
+        api.getStockTransfers(),
+        api.getFinancialAccounts(),
       ]);
       setVariants(vars);
       setCustomers(custs);
       setSyncQueue(sync);
       setMasterProducts(master);
       setStockAdjustmentRequests(adjustments);
+      setOnboardingState(onboarding);
+      setWarehouses(whs);
+      setBranches(brs);
+      setStockTransfers(transfers);
+      setFinancialAccounts(finances);
     } catch (err) {
       console.error('Failed to load initial data:', err);
     }
@@ -272,6 +312,9 @@ export function App() {
   const pendingAdjustmentCount = stockAdjustmentRequests.filter(
     (s) => s.status === 'PENDING_APPROVAL'
   ).length;
+  const inTransitTransferCount = stockTransfers.filter(
+    (s) => s.status === 'IN_TRANSIT' || s.status === 'DISPATCHED'
+  ).length;
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 overflow-hidden text-slate-100">
@@ -287,6 +330,9 @@ export function App() {
         }}
         pendingSyncCount={pendingSyncCount}
         pendingAdjustmentCount={pendingAdjustmentCount}
+        inTransitTransferCount={inTransitTransferCount}
+        businessName={onboardingState?.business.business_name || 'Cosmenply Luxury Group'}
+        onOpenOnboarding={() => setIsOnboardingOpen(true)}
       />
 
       {/* Floating Scan Notification Banner */}
@@ -375,6 +421,31 @@ export function App() {
           />
         )}
 
+        {activeTab === 'supply_chain' && (
+          <SupplyChainView
+            warehouses={warehouses}
+            branches={branches}
+            transfers={stockTransfers}
+            variants={variants}
+            onCreateTransfer={async (data) => {
+              const tr = await api.createStockTransfer(data);
+              await loadData();
+              return tr;
+            }}
+            onReceiveTransfer={async (id, items, ev, notes) => {
+              const tr = await api.receiveStockTransfer(id, items, ev, notes);
+              await loadData();
+              return tr;
+            }}
+            onAcceptTransfer={async (id) => {
+              const tr = await api.acceptStockTransfer(id);
+              await loadData();
+              return tr;
+            }}
+            onRefresh={loadData}
+          />
+        )}
+
         {activeTab === 'customers' && (
           <CustomerLedgerView
             customers={customers}
@@ -420,6 +491,23 @@ export function App() {
           loadData();
         }}
       />
+
+      {/* Multi-Tenant Enterprise Onboarding Wizard */}
+      {onboardingState && (
+        <OnboardingWizardModal
+          isOpen={isOnboardingOpen}
+          onClose={() => setIsOnboardingOpen(false)}
+          initialData={onboardingState}
+          onSaveOnboarding={async (data) => {
+            await api.saveTenantOnboarding(data);
+            await loadData();
+          }}
+          onComplete={() => {
+            setIsOnboardingOpen(false);
+            loadData();
+          }}
+        />
+      )}
     </div>
   );
 }

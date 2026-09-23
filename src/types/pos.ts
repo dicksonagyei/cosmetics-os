@@ -143,7 +143,13 @@ export interface DashboardMetrics {
 
 export interface SyncQueueItem {
   id: string;
-  event_type: 'ORDER_CREATED' | 'STOCK_ADJUSTED' | 'CUSTOMER_PAYMENT' | 'STOCK_RECEIVED';
+  event_type:
+    | 'ORDER_CREATED'
+    | 'STOCK_ADJUSTED'
+    | 'CUSTOMER_PAYMENT'
+    | 'STOCK_RECEIVED'
+    | 'STOCK_TRANSFER_DISPATCHED'
+    | 'STOCK_TRANSFER_ACCEPTED';
   payload: string;
   status: 'PENDING' | 'PROCESSING' | 'SYNCED' | 'FAILED';
   retry_count: number;

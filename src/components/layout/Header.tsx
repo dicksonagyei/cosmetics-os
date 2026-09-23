@@ -11,11 +11,13 @@ import {
   Layers,
   Zap,
   ShieldAlert,
+  Truck,
+  Building2,
 } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'pos' | 'inventory' | 'customers' | 'sync';
-  onTabChange: (tab: 'pos' | 'inventory' | 'customers' | 'sync') => void;
+  activeTab: 'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync';
+  onTabChange: (tab: 'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync') => void;
   scannerStatus: {
     isScanning: boolean;
     lastScanned: string | null;
@@ -24,7 +26,10 @@ interface HeaderProps {
   };
   pendingSyncCount: number;
   pendingAdjustmentCount?: number;
+  inTransitTransferCount?: number;
+  businessName?: string;
   onOpenApprovals?: () => void;
+  onOpenOnboarding?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -33,12 +38,15 @@ export const Header: React.FC<HeaderProps> = ({
   scannerStatus,
   pendingSyncCount,
   pendingAdjustmentCount = 0,
+  inTransitTransferCount = 0,
+  businessName = 'Cosmenply Luxury Group',
   onOpenApprovals,
+  onOpenOnboarding,
 }) => {
   return (
     <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 text-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 select-none">
       {/* Brand & Branch */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-3.5">
         <div className="flex items-center space-x-2.5">
           <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-pink-600 via-rose-500 to-amber-400 flex items-center justify-center shadow-lg shadow-pink-500/20">
             <Sparkles className="w-5 h-5 text-white" />
@@ -52,13 +60,20 @@ export const Header: React.FC<HeaderProps> = ({
                 PRO POS
               </span>
             </div>
-            <div className="flex items-center space-x-2 text-[11px] text-slate-400 font-medium">
+            <div className="flex items-center space-x-1.5 text-[11px] text-slate-400 font-medium">
               <span className="flex items-center space-x-1">
                 <Store className="w-3 h-3 text-pink-400" />
                 <span>Accra Mall #01</span>
               </span>
               <span>•</span>
-              <span className="text-slate-400 font-mono">REG-01</span>
+              <button
+                onClick={onOpenOnboarding}
+                title="Configure Multi-Tenant Cloud Enterprise"
+                className="text-slate-300 hover:text-pink-300 transition-colors flex items-center space-x-1 underline decoration-dotted"
+              >
+                <Building2 className="w-3 h-3 text-amber-400" />
+                <span className="font-bold truncate max-w-[140px]">{businessName}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -67,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
         <nav className="flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-800/80 ml-2">
           <button
             onClick={() => onTabChange('pos')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'pos'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -82,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => onTabChange('inventory')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
               activeTab === 'inventory'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -101,8 +116,25 @@ export const Header: React.FC<HeaderProps> = ({
           </button>
 
           <button
+            onClick={() => onTabChange('supply_chain')}
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+              activeTab === 'supply_chain'
+                ? 'bg-gradient-to-r from-amber-600 to-orange-600 text-white shadow-md shadow-amber-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>Logistics & Transfers</span>
+            {inTransitTransferCount > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 animate-pulse">
+                {inTransitTransferCount}
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => onTabChange('customers')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'customers'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -117,7 +149,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => onTabChange('sync')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
               activeTab === 'sync'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
