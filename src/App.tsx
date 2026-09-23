@@ -17,6 +17,11 @@ import {
   StockTransfer,
   FinancialAccount,
 } from './types/tenant';
+import {
+  ProductBarcodeMapping,
+  BarTenderIntegrationConfig,
+  LabelPrintJob,
+} from './types/label';
 import { api } from './utils/tauriBridge';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
 import { Header } from './components/layout/Header';
@@ -33,10 +38,11 @@ import { CustomerLedgerView } from './components/customer/CustomerLedgerView';
 import { SyncStatusView } from './components/sync/SyncStatusView';
 import { SupplyChainView } from './components/supply_chain/SupplyChainView';
 import { OnboardingWizardModal } from './components/onboarding/OnboardingWizardModal';
+import { LabelStudioView } from './components/labels/LabelStudioView';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<
-    'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync'
+    'pos' | 'inventory' | 'labels' | 'customers' | 'supply_chain' | 'sync'
   >('pos');
   const [variants, setVariants] = useState<VariantDetail[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -45,6 +51,19 @@ export function App() {
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
   const [masterProducts, setMasterProducts] = useState<MasterCatalogProduct[]>([]);
   const [stockAdjustmentRequests, setStockAdjustmentRequests] = useState<StockAdjustmentRequest[]>([]);
+
+  // Barcode & Label System State
+  const [barcodeMappings, setBarcodeMappings] = useState<ProductBarcodeMapping[]>([]);
+  const [bartenderConfig, setBartenderConfig] = useState<BarTenderIntegrationConfig>({
+    integration_mode: 'WEB_PRINT_API',
+    bartender_endpoint_url: 'http://127.0.0.1:8080/BarTender/api/v1/print',
+    btw_template_filename: 'Cosmetics_Retail_50x30.btw',
+    drop_folder_path: 'C:\\BarTender\\Commander\\ScanIn\\',
+    printer_name: 'Zebra ZD420 (203dpi)',
+    printer_dpi: 203,
+    auto_deduct_roll_stock: true,
+  });
+  const [printHistory, setPrintHistory] = useState<LabelPrintJob[]>([]);
 
   // Multi-Tenant, Logistics & Supply Chain State
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
@@ -76,6 +95,9 @@ export function App() {
         brs,
         transfers,
         finances,
+        barcodes,
+        btConfig,
+        pHistory,
       ] = await Promise.all([
         api.getVariants(),
         api.getCustomers(),
@@ -87,6 +109,9 @@ export function App() {
         api.getBranches(),
         api.getStockTransfers(),
         api.getFinancialAccounts(),
+        api.getProductBarcodes(),
+        api.getBarTenderConfig(),
+        api.getLabelPrintHistory(),
       ]);
       setVariants(vars);
       setCustomers(custs);
@@ -98,6 +123,9 @@ export function App() {
       setBranches(brs);
       setStockTransfers(transfers);
       setFinancialAccounts(finances);
+      setBarcodeMappings(barcodes);
+      setBartenderConfig(btConfig);
+      setPrintHistory(pHistory);
     } catch (err) {
       console.error('Failed to load initial data:', err);
     }
@@ -288,6 +316,9 @@ export function App() {
       if (e.key === 'F1') {
         e.preventDefault();
         setActiveTab('pos');
+      } else if (e.key === 'F2') {
+        e.preventDefault();
+        setActiveTab('labels');
       } else if (e.key === 'F3') {
         e.preventDefault();
         setActiveTab('inventory');
@@ -398,6 +429,31 @@ export function App() {
               />
             </div>
           </div>
+        )}
+
+        {activeTab === 'labels' && (
+          <LabelStudioView
+            barcodeMappings={barcodeMappings}
+            variants={variants}
+            config={bartenderConfig}
+            printHistory={printHistory}
+            onSaveBarcodeMapping={async (data) => {
+              await api.saveProductBarcode(data);
+              await loadData();
+            }}
+            onSaveConfig={async (cfg) => {
+              await api.saveBarTenderConfig(cfg);
+              await loadData();
+            }}
+            onPrintLabels={async (data) => {
+              await api.printLabels(data);
+              await loadData();
+            }}
+            onTestPrint={async () => {
+              await api.testPrintMachine();
+            }}
+            onRefresh={loadData}
+          />
         )}
 
         {activeTab === 'inventory' && (

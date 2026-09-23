@@ -16,8 +16,8 @@ import {
 } from 'lucide-react';
 
 interface HeaderProps {
-  activeTab: 'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync';
-  onTabChange: (tab: 'pos' | 'inventory' | 'customers' | 'supply_chain' | 'sync') => void;
+  activeTab: 'pos' | 'inventory' | 'labels' | 'customers' | 'supply_chain' | 'sync';
+  onTabChange: (tab: 'pos' | 'inventory' | 'labels' | 'customers' | 'supply_chain' | 'sync') => void;
   scannerStatus: {
     isScanning: boolean;
     lastScanned: string | null;
@@ -92,6 +92,21 @@ export const Header: React.FC<HeaderProps> = ({
             <span>Cashier POS</span>
             <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/10 text-white/80">
               F1
+            </span>
+          </button>
+
+          <button
+            onClick={() => onTabChange('labels')}
+            className={`flex items-center space-x-2 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
+              activeTab === 'labels'
+                ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
+                : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
+            }`}
+          >
+            <Barcode className="w-3.5 h-3.5 text-pink-400" />
+            <span>Barcodes & Labels</span>
+            <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/10 text-white/80">
+              F2
             </span>
           </button>
 

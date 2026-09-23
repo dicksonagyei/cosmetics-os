@@ -20,6 +20,12 @@ import {
   StockTransferItem,
   OnboardingState,
 } from '../types/tenant';
+import {
+  ProductBarcodeMapping,
+  BarTenderIntegrationConfig,
+  LabelPrintJob,
+  LabelTemplateType,
+} from '../types/label';
 import { buildReceiptEscPos } from './escpos';
 
 // Check if running inside native Tauri runtime
@@ -875,6 +881,180 @@ let mockStockTransfers: StockTransfer[] = [
   },
 ];
 
+let mockBarTenderConfig: BarTenderIntegrationConfig = {
+  integration_mode: 'WEB_PRINT_API',
+  bartender_endpoint_url: 'http://127.0.0.1:8080/BarTender/api/v1/print',
+  btw_template_filename: 'Cosmetics_Retail_50x30.btw',
+  drop_folder_path: 'C:\\BarTender\\Commander\\ScanIn\\',
+  printer_name: 'Zebra ZD420 (203dpi)',
+  printer_dpi: 203,
+  auto_deduct_roll_stock: true,
+};
+
+let mockBarcodeMappings: ProductBarcodeMapping[] = [
+  {
+    id: 'bc_fenty_420',
+    variant_id: 'var_fenty_420',
+    product_id: 'prod_fenty_pro_filtr',
+    product_name: "Pro Filt'r Soft Matte Longwear Foundation",
+    brand: 'Fenty Beauty',
+    sku: 'FB-PF-420',
+    primary_barcode: '840000000001',
+    secondary_barcodes: ['840000000001-CTN12'],
+    barcode_format: 'EAN13',
+    shade_name: 'Shade #420 (Deep Neutral)',
+    shade_code: '420',
+    size_volume: '32ml / 1.08 fl oz',
+    batch_number: 'BT-2026-09A',
+    expiry_date: '2028-11-30',
+    selling_price_cents: 24000,
+    cost_price_cents: 14000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 142,
+    roll_stock_remaining: 358,
+    last_printed_at: new Date(Date.now() - 3600000 * 5).toISOString(),
+    deduction_history: [
+      {
+        id: 'ded_01',
+        timestamp: new Date(Date.now() - 3600000 * 5).toISOString(),
+        quantity_printed: 50,
+        roll_batch: 'ROLL-500-A',
+        operator_name: 'Pius Agyei',
+        notes: 'Pre-tagging 50 units for Accra Mall counter display',
+      },
+    ],
+  },
+  {
+    id: 'bc_fenty_390',
+    variant_id: 'var_fenty_390',
+    product_id: 'prod_fenty_pro_filtr',
+    product_name: "Pro Filt'r Soft Matte Longwear Foundation",
+    brand: 'Fenty Beauty',
+    sku: 'FB-PF-390',
+    primary_barcode: '840000000002',
+    secondary_barcodes: [],
+    barcode_format: 'EAN13',
+    shade_name: 'Shade #390 (Medium-Deep Warm)',
+    shade_code: '390',
+    size_volume: '32ml / 1.08 fl oz',
+    batch_number: 'BT-2026-09A',
+    expiry_date: '2028-11-30',
+    selling_price_cents: 24000,
+    cost_price_cents: 14000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 85,
+    roll_stock_remaining: 415,
+    last_printed_at: new Date(Date.now() - 3600000 * 24).toISOString(),
+    deduction_history: [],
+  },
+  {
+    id: 'bc_huda_cherry',
+    variant_id: 'var_huda_cherry',
+    product_id: 'prod_huda_easy_bake',
+    product_name: 'Easy Bake Loose Baking & Setting Powder',
+    brand: 'Huda Beauty',
+    sku: 'HB-EB-CHRY',
+    primary_barcode: '840000000003',
+    secondary_barcodes: ['HB-EB-CHRY-PACK6'],
+    barcode_format: 'EAN13',
+    shade_name: 'Cherry Blossom (Soft Pink)',
+    shade_code: 'CHRY',
+    size_volume: '20g / 0.71 oz',
+    batch_number: 'LOT-HB-892',
+    expiry_date: '2029-05-15',
+    selling_price_cents: 22000,
+    cost_price_cents: 13000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 210,
+    roll_stock_remaining: 290,
+    last_printed_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    deduction_history: [],
+  },
+  {
+    id: 'bc_rare_joy',
+    variant_id: 'var_rare_joy',
+    product_id: 'prod_rare_soft_pinch',
+    product_name: 'Soft Pinch Liquid Blush',
+    brand: 'Rare Beauty',
+    sku: 'RB-SPB-JOY',
+    primary_barcode: '840000000004',
+    secondary_barcodes: [],
+    barcode_format: 'UPCA',
+    shade_name: 'Joy (Dewy Muted Peach)',
+    shade_code: 'JOY',
+    size_volume: '7.5ml / 0.25 fl oz',
+    batch_number: 'RB-LOT-441',
+    expiry_date: '2028-08-20',
+    selling_price_cents: 18000,
+    cost_price_cents: 10000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 320,
+    roll_stock_remaining: 180,
+    last_printed_at: new Date(Date.now() - 3600000 * 48).toISOString(),
+    deduction_history: [],
+  },
+  {
+    id: 'bc_dior_001',
+    variant_id: 'var_dior_001',
+    product_id: 'prod_dior_lip_oil',
+    product_name: 'Dior Addict Lip Glow Oil',
+    brand: 'Dior Beauty',
+    sku: 'CD-LGO-001',
+    primary_barcode: '840000000005',
+    secondary_barcodes: [],
+    barcode_format: 'EAN13',
+    shade_name: '001 Pink (Light Rose Glow)',
+    shade_code: '001',
+    size_volume: '6ml / 0.20 fl oz',
+    batch_number: 'DIOR-PARIS-99',
+    expiry_date: '2028-10-10',
+    selling_price_cents: 29000,
+    cost_price_cents: 17000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 95,
+    roll_stock_remaining: 405,
+    last_printed_at: new Date(Date.now() - 3600000 * 12).toISOString(),
+    deduction_history: [],
+  },
+  {
+    id: 'bc_nars_custard',
+    variant_id: 'var_nars_custard',
+    product_id: 'prod_nars_radiant_creamy',
+    product_name: 'Radiant Creamy Concealer',
+    brand: 'NARS Cosmetics',
+    sku: 'NARS-RCC-CUST',
+    primary_barcode: '840000000006',
+    secondary_barcodes: [],
+    barcode_format: 'CODE128',
+    shade_name: 'Custard (Medium 1)',
+    shade_code: 'CUST',
+    size_volume: '6ml / 0.22 oz',
+    batch_number: 'NARS-B2026',
+    expiry_date: '2029-01-30',
+    selling_price_cents: 19500,
+    cost_price_cents: 11000,
+    currency: 'GHS',
+    currency_symbol: '₵',
+    image_url: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80',
+    total_labels_printed: 160,
+    roll_stock_remaining: 340,
+    last_printed_at: new Date(Date.now() - 3600000 * 6).toISOString(),
+    deduction_history: [],
+  },
+];
+
+let mockPrintHistory: LabelPrintJob[] = [];
+
 export const api = {
   async getVariants(): Promise<VariantDetail[]> {
     if (isTauri()) {
@@ -1612,6 +1792,147 @@ export const api = {
     };
     mockOnboarding.financial_accounts.push(newAcc);
     return newAcc;
+  },
+
+  // Barcode & Label Registry APIs
+  async getProductBarcodes(): Promise<ProductBarcodeMapping[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<ProductBarcodeMapping[]>('get_product_barcodes');
+    }
+    return [...mockBarcodeMappings];
+  },
+
+  async saveProductBarcode(data: Partial<ProductBarcodeMapping>): Promise<ProductBarcodeMapping> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<ProductBarcodeMapping>('save_product_barcode', { data });
+    }
+
+    if (data.id) {
+      const idx = mockBarcodeMappings.findIndex((m) => m.id === data.id);
+      if (idx !== -1) {
+        mockBarcodeMappings[idx] = {
+          ...mockBarcodeMappings[idx],
+          ...data,
+        } as ProductBarcodeMapping;
+        return mockBarcodeMappings[idx];
+      }
+    }
+
+    const newMapping: ProductBarcodeMapping = {
+      id: `bc_${Date.now()}`,
+      variant_id: data.variant_id || 'var_custom',
+      product_id: data.product_id || 'prod_custom',
+      product_name: data.product_name || 'Custom Product',
+      brand: data.brand || 'Cosmetics Brand',
+      sku: data.sku || `SKU-${Date.now()}`,
+      primary_barcode: data.primary_barcode || '840000000000',
+      secondary_barcodes: data.secondary_barcodes || [],
+      barcode_format: data.barcode_format || 'EAN13',
+      shade_name: data.shade_name,
+      shade_code: data.shade_code,
+      size_volume: data.size_volume,
+      batch_number: data.batch_number || 'BT-2026-X',
+      expiry_date: data.expiry_date || '2028-12-31',
+      selling_price_cents: data.selling_price_cents || 20000,
+      cost_price_cents: data.cost_price_cents || 10000,
+      currency: data.currency || 'GHS',
+      currency_symbol: data.currency_symbol || '₵',
+      image_url: data.image_url,
+      total_labels_printed: 0,
+      roll_stock_remaining: data.roll_stock_remaining ?? 500,
+      deduction_history: [],
+    };
+    mockBarcodeMappings.unshift(newMapping);
+    return newMapping;
+  },
+
+  async getBarTenderConfig(): Promise<BarTenderIntegrationConfig> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<BarTenderIntegrationConfig>('get_bartender_config');
+    }
+    return { ...mockBarTenderConfig };
+  },
+
+  async saveBarTenderConfig(config: BarTenderIntegrationConfig): Promise<BarTenderIntegrationConfig> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<BarTenderIntegrationConfig>('save_bartender_config', { config });
+    }
+    mockBarTenderConfig = { ...config };
+    return mockBarTenderConfig;
+  },
+
+  async printLabels(params: {
+    mapping: ProductBarcodeMapping;
+    template: LabelTemplateType;
+    quantity: number;
+    mode: 'BARTENDER' | 'DIRECT_RAW';
+    generatedZpl?: string;
+    generatedTspl?: string;
+    operator_name?: string;
+  }): Promise<LabelPrintJob> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<LabelPrintJob>('print_labels', { params });
+    }
+
+    const { mapping, template, quantity, mode, generatedZpl, generatedTspl } = params;
+
+    const target = mockBarcodeMappings.find((m) => m.id === mapping.id);
+    if (target) {
+      target.total_labels_printed += quantity;
+      if (mockBarTenderConfig.auto_deduct_roll_stock) {
+        target.roll_stock_remaining = Math.max(0, target.roll_stock_remaining - quantity);
+      }
+      target.last_printed_at = new Date().toISOString();
+      target.deduction_history.unshift({
+        id: `ded_${Date.now()}`,
+        timestamp: new Date().toISOString(),
+        quantity_printed: quantity,
+        roll_batch: 'ROLL-AUTO',
+        operator_name: params.operator_name || 'Store Operator',
+        notes: `Printed ${quantity} labels via ${mode}`,
+      });
+    }
+
+    const job: LabelPrintJob = {
+      id: `job_${Date.now()}`,
+      mapping_id: mapping.id,
+      product_name: mapping.product_name,
+      brand: mapping.brand,
+      barcode: mapping.primary_barcode,
+      template_type: template,
+      quantity_to_print: quantity,
+      printer_target: mockBarTenderConfig.printer_name,
+      status: mode === 'BARTENDER' ? 'SENT_TO_BARTENDER' : 'PRINTED',
+      generated_zpl: generatedZpl,
+      generated_tspl: generatedTspl,
+      printed_at: new Date().toISOString(),
+      operator_name: params.operator_name || 'Store Operator',
+    };
+
+    mockPrintHistory.unshift(job);
+    return job;
+  },
+
+  async testPrintMachine(): Promise<boolean> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<boolean>('test_print_machine');
+    }
+    await new Promise((res) => setTimeout(res, 500));
+    return true;
+  },
+
+  async getLabelPrintHistory(): Promise<LabelPrintJob[]> {
+    if (isTauri()) {
+      const { invoke } = await import('@tauri-apps/api/core');
+      return invoke<LabelPrintJob[]>('get_label_print_history');
+    }
+    return [...mockPrintHistory];
   },
 };
 
