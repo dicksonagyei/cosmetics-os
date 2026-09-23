@@ -7,6 +7,10 @@ import {
   CreateOrderResponse,
   DashboardMetrics,
   SyncQueueItem,
+  MasterCatalogProduct,
+  StockAdjustmentRequest,
+  StockAdjustmentReason,
+  CsvImportProductRow,
 } from '../types/pos';
 import { buildReceiptEscPos } from './escpos';
 
@@ -351,6 +355,290 @@ let mockSyncQueue: SyncQueueItem[] = [];
 /**
  * Main Bridge API for communicating with backend (Native Tauri or Mock Edge)
  */
+// Pre-configured Global Master Cosmetics Catalog
+export const MASTER_BEAUTY_CATALOG: MasterCatalogProduct[] = [
+  {
+    id: 'master_rare_blush',
+    name: 'Soft Pinch Liquid Blush',
+    brand: 'Rare Beauty by Selena Gomez',
+    category: 'Blush',
+    description: 'Weightless, long-lasting liquid blush that blends and builds beautifully for a soft, healthy flush.',
+    image_url: 'https://images.unsplash.com/photo-1596462502278-27bfdc403348?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'RB-SPB-JOY',
+        barcode: '840122900011',
+        shade_name: 'Joy (Muted Peach)',
+        shade_code: '#E3826F',
+        size_volume: '7.5ml / 0.25 fl oz',
+        default_cost_cents: 1100,
+        suggested_retail_cents: 2300,
+        initial_stock: 20,
+      },
+      {
+        sku: 'RB-SPB-HAPPY',
+        barcode: '840122900012',
+        shade_name: 'Happy (Dewy Cool Pink)',
+        shade_code: '#E57399',
+        size_volume: '7.5ml / 0.25 fl oz',
+        default_cost_cents: 1100,
+        suggested_retail_cents: 2300,
+        initial_stock: 18,
+      },
+      {
+        sku: 'RB-SPB-ENCOURAGE',
+        barcode: '840122900013',
+        shade_name: 'Encourage (Soft Neutral Pink)',
+        shade_code: '#B85B6C',
+        size_volume: '7.5ml / 0.25 fl oz',
+        default_cost_cents: 1100,
+        suggested_retail_cents: 2300,
+        initial_stock: 15,
+      },
+      {
+        sku: 'RB-SPB-HOPE',
+        barcode: '840122900014',
+        shade_name: 'Hope (Nude Mauve)',
+        shade_code: '#C67A7D',
+        size_volume: '7.5ml / 0.25 fl oz',
+        default_cost_cents: 1100,
+        suggested_retail_cents: 2300,
+        initial_stock: 12,
+      },
+    ],
+  },
+  {
+    id: 'master_huda_powder',
+    name: 'Easy Bake Loose Baking & Setting Powder',
+    brand: 'Huda Beauty',
+    category: 'Setting Powder',
+    description: 'Extremely light and silky texture that blends seamlessly into the skin leaving a luminous matte finish.',
+    image_url: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'HUDA-EB-POUND',
+        barcode: '629110603001',
+        shade_name: 'Pound Cake (Fair to Medium)',
+        shade_code: '#F5E6D3',
+        size_volume: '20g / 0.71 oz',
+        default_cost_cents: 1700,
+        suggested_retail_cents: 3800,
+        initial_stock: 24,
+      },
+      {
+        sku: 'HUDA-EB-BANANA',
+        barcode: '629110603002',
+        shade_name: 'Banana Bread (Medium Tan)',
+        shade_code: '#E8CA97',
+        size_volume: '20g / 0.71 oz',
+        default_cost_cents: 1700,
+        suggested_retail_cents: 3800,
+        initial_stock: 20,
+      },
+      {
+        sku: 'HUDA-EB-KUNAFA',
+        barcode: '629110603003',
+        shade_name: 'Kunafa (Deep Tan to Rich)',
+        shade_code: '#C68E56',
+        size_volume: '20g / 0.71 oz',
+        default_cost_cents: 1700,
+        suggested_retail_cents: 3800,
+        initial_stock: 16,
+      },
+      {
+        sku: 'HUDA-EB-CHERRY',
+        barcode: '629110603004',
+        shade_name: 'Cherry Blossom (Brightening Pink)',
+        shade_code: '#FBD4D9',
+        size_volume: '20g / 0.71 oz',
+        default_cost_cents: 1700,
+        suggested_retail_cents: 3800,
+        initial_stock: 14,
+      },
+    ],
+  },
+  {
+    id: 'master_nars_concealer',
+    name: 'Radiant Creamy Concealer',
+    brand: 'NARS Cosmetics',
+    category: 'Concealer',
+    description: 'Award-winning multi-action concealer that obscures imperfections and delivers 16-hour hydration.',
+    image_url: 'https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'NARS-RCC-CUST',
+        barcode: '607845012341',
+        shade_name: 'Custard (Medium 1)',
+        shade_code: '#DDB892',
+        size_volume: '6ml / 0.22 fl oz',
+        default_cost_cents: 1500,
+        suggested_retail_cents: 3200,
+        initial_stock: 15,
+      },
+      {
+        sku: 'NARS-RCC-CARAM',
+        barcode: '607845012342',
+        shade_name: 'Caramel (Medium-Dark 2)',
+        shade_code: '#B07D53',
+        size_volume: '6ml / 0.22 fl oz',
+        default_cost_cents: 1500,
+        suggested_retail_cents: 3200,
+        initial_stock: 12,
+      },
+      {
+        sku: 'NARS-RCC-AMANDE',
+        barcode: '607845012343',
+        shade_name: 'Amande (Medium-Dark 3)',
+        shade_code: '#844D32',
+        size_volume: '6ml / 0.22 fl oz',
+        default_cost_cents: 1500,
+        suggested_retail_cents: 3200,
+        initial_stock: 10,
+      },
+    ],
+  },
+  {
+    id: 'master_fenty_gloss',
+    name: 'Gloss Bomb Universal Lip Luminizer',
+    brand: 'Fenty Beauty',
+    category: 'Lip Gloss',
+    description: 'The ultimate gotta-have-it lip gloss with explosive shine that feels as good as it looks.',
+    image_url: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'FB-GB-GLOW',
+        barcode: '840000001001',
+        shade_name: 'Fenty Glow (Shimmering Rose Nude)',
+        shade_code: '#B86F5D',
+        size_volume: '9ml / 0.3 fl oz',
+        default_cost_cents: 1000,
+        suggested_retail_cents: 2100,
+        initial_stock: 30,
+      },
+      {
+        sku: 'FB-GB-FUSSY',
+        barcode: '840000001002',
+        shade_name: 'Fu$$y (Shimmering Pink)',
+        shade_code: '#DE899B',
+        size_volume: '9ml / 0.3 fl oz',
+        default_cost_cents: 1000,
+        suggested_retail_cents: 2100,
+        initial_stock: 22,
+      },
+      {
+        sku: 'FB-GB-HOTCHOC',
+        barcode: '840000001003',
+        shade_name: 'Hot Chocolit (Rich Shimmering Brown)',
+        shade_code: '#5C382A',
+        size_volume: '9ml / 0.3 fl oz',
+        default_cost_cents: 1000,
+        suggested_retail_cents: 2100,
+        initial_stock: 18,
+      },
+    ],
+  },
+  {
+    id: 'master_ct_powder',
+    name: 'Airbrush Flawless Finish Micro-Powder',
+    brand: 'Charlotte Tilbury',
+    category: 'Setting Powder',
+    description: 'Complexion-enhancing micro-powder with soft-focus effect that smooths pores and perfects skin tone.',
+    image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'CT-AFF-02MED',
+        barcode: '506054272002',
+        shade_name: '2 Medium (Warm Beige)',
+        shade_code: '#DEB887',
+        size_volume: '8g / 0.28 oz',
+        default_cost_cents: 2200,
+        suggested_retail_cents: 4800,
+        initial_stock: 10,
+      },
+      {
+        sku: 'CT-AFF-03TAN',
+        barcode: '506054272003',
+        shade_name: '3 Tan (Golden Honey)',
+        shade_code: '#B8860B',
+        size_volume: '8g / 0.28 oz',
+        default_cost_cents: 2200,
+        suggested_retail_cents: 4800,
+        initial_stock: 8,
+      },
+      {
+        sku: 'CT-AFF-04DEEP',
+        barcode: '506054272004',
+        shade_name: '4 Deep (Rich Bronze)',
+        shade_code: '#663300',
+        size_volume: '8g / 0.28 oz',
+        default_cost_cents: 2200,
+        suggested_retail_cents: 4800,
+        initial_stock: 6,
+      },
+    ],
+  },
+  {
+    id: 'master_dior_lipoil',
+    name: 'Dior Addict Lip Glow Oil',
+    brand: 'Dior Beauty',
+    category: 'Lip Care',
+    description: 'Nourishing glossy lip oil infused with cherry oil that intensely protects, enhances and beautifies lips.',
+    image_url: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80',
+    variants: [
+      {
+        sku: 'DIOR-LGO-001',
+        barcode: '334890150001',
+        shade_name: '001 Pink (Delicate Pink)',
+        shade_code: '#F79AC0',
+        size_volume: '6ml / 0.2 fl oz',
+        default_cost_cents: 2000,
+        suggested_retail_cents: 4000,
+        initial_stock: 14,
+      },
+      {
+        sku: 'DIOR-LGO-012',
+        barcode: '334890150012',
+        shade_name: '012 Rosewood (Rose Nude)',
+        shade_code: '#C46270',
+        size_volume: '6ml / 0.2 fl oz',
+        default_cost_cents: 2000,
+        suggested_retail_cents: 4000,
+        initial_stock: 12,
+      },
+      {
+        sku: 'DIOR-LGO-020',
+        barcode: '334890150020',
+        shade_name: '020 Mahogany (Deep Warm Brown)',
+        shade_code: '#7B3B2B',
+        size_volume: '6ml / 0.2 fl oz',
+        default_cost_cents: 2000,
+        suggested_retail_cents: 4000,
+        initial_stock: 10,
+      },
+    ],
+  },
+];
+
+let mockAdjustmentRequests: StockAdjustmentRequest[] = [
+  {
+    id: 'adj_init_01',
+    variant_id: 'var_fenty_420',
+    product_name: "Pro Filt'r Soft Matte Longwear Foundation",
+    brand: 'Fenty Beauty',
+    shade_name: 'Shade #420 (Deep Neutral)',
+    sku: 'FB-PF-420',
+    barcode: '840000000001',
+    previous_quantity: 24,
+    new_quantity: 22,
+    quantity_delta: -2,
+    reason: 'DAMAGED_TESTER',
+    notes: '2 bottles opened and marked as display testers at the makeup counter.',
+    requested_by: 'Ama (Floor Assistant)',
+    requested_at: new Date(Date.now() - 3600000 * 2).toISOString(),
+    status: 'PENDING_APPROVAL',
+  },
+];
+
 export const api = {
   async getVariants(): Promise<VariantDetail[]> {
     if (isTauri()) {
@@ -385,6 +673,244 @@ export const api = {
     }
     const match = mockVariants.find((v) => v.barcode === barcode.trim());
     return match ? { ...match } : null;
+  },
+
+  async getMasterCatalog(): Promise<MasterCatalogProduct[]> {
+    return [...MASTER_BEAUTY_CATALOG];
+  },
+
+  async importMasterProducts(productIds: string[]): Promise<number> {
+    let importedCount = 0;
+    const selected = MASTER_BEAUTY_CATALOG.filter((p) => productIds.includes(p.id));
+
+    for (const prod of selected) {
+      for (const v of prod.variants) {
+        const existing = mockVariants.find((mv) => mv.barcode === v.barcode || mv.sku === v.sku);
+        if (!existing) {
+          mockVariants.push({
+            id: `var_master_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+            product_id: `prod_${prod.id}`,
+            product_name: prod.name,
+            brand: prod.brand,
+            category: prod.category,
+            sku: v.sku,
+            barcode: v.barcode,
+            shade_name: v.shade_name,
+            shade_code: v.shade_code,
+            size_volume: v.size_volume,
+            cost_price_cents: v.default_cost_cents,
+            selling_price_cents: v.suggested_retail_cents,
+            expiry_date: '2028-06-30',
+            batch_number: `LOT-IMP-${Date.now().toString().slice(-4)}`,
+            low_stock_threshold: 5,
+            quantity_on_hand: v.initial_stock,
+            image_url: prod.image_url,
+          });
+          importedCount++;
+        }
+      }
+    }
+
+    mockSyncQueue.push({
+      id: `sync_imp_${Date.now()}`,
+      event_type: 'STOCK_RECEIVED',
+      payload: JSON.stringify({ importedProductsCount: selected.length, importedVariantsCount: importedCount }),
+      status: 'PENDING',
+      retry_count: 0,
+      created_at: new Date().toISOString(),
+    });
+
+    return importedCount;
+  },
+
+  async importCsvProducts(rows: CsvImportProductRow[]): Promise<number> {
+    let count = 0;
+    for (const r of rows) {
+      const existing = mockVariants.find((mv) => mv.barcode === r.barcode || mv.sku === r.sku);
+      if (existing) {
+        existing.quantity_on_hand += r.quantity_on_hand;
+        count++;
+      } else {
+        mockVariants.push({
+          id: `var_csv_${Date.now()}_${count}`,
+          product_id: `prod_csv_${Date.now()}`,
+          product_name: r.product_name,
+          brand: r.brand,
+          category: r.category,
+          sku: r.sku,
+          barcode: r.barcode,
+          shade_name: r.shade_name || null,
+          shade_code: r.shade_code || null,
+          size_volume: r.size_volume || null,
+          cost_price_cents: r.cost_price_cents,
+          selling_price_cents: r.selling_price_cents,
+          expiry_date: r.expiry_date || null,
+          batch_number: r.batch_number || null,
+          low_stock_threshold: 5,
+          quantity_on_hand: r.quantity_on_hand,
+          image_url: r.image_url || null,
+        });
+        count++;
+      }
+    }
+
+    mockSyncQueue.push({
+      id: `sync_csv_${Date.now()}`,
+      event_type: 'STOCK_RECEIVED',
+      payload: JSON.stringify({ rowsImported: count }),
+      status: 'PENDING',
+      retry_count: 0,
+      created_at: new Date().toISOString(),
+    });
+
+    return count;
+  },
+
+  async createProductWithVariants(data: {
+    product_name: string;
+    brand: string;
+    category: string;
+    description?: string;
+    image_url?: string;
+    variants: {
+      sku: string;
+      barcode: string;
+      shade_name?: string;
+      shade_code?: string;
+      size_volume?: string;
+      cost_price_cents: number;
+      selling_price_cents: number;
+      expiry_date?: string;
+      batch_number?: string;
+      low_stock_threshold?: number;
+      quantity_on_hand: number;
+    }[];
+  }): Promise<VariantDetail[]> {
+    const prodId = `prod_${Date.now()}`;
+    const newItems: VariantDetail[] = [];
+
+    for (const v of data.variants) {
+      const newVar: VariantDetail = {
+        id: `var_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        product_id: prodId,
+        product_name: data.product_name,
+        brand: data.brand,
+        category: data.category,
+        sku: v.sku,
+        barcode: v.barcode,
+        shade_name: v.shade_name || null,
+        shade_code: v.shade_code || null,
+        size_volume: v.size_volume || null,
+        cost_price_cents: v.cost_price_cents,
+        selling_price_cents: v.selling_price_cents,
+        expiry_date: v.expiry_date || null,
+        batch_number: v.batch_number || null,
+        low_stock_threshold: v.low_stock_threshold || 5,
+        quantity_on_hand: v.quantity_on_hand,
+        image_url: data.image_url || null,
+      };
+      mockVariants.unshift(newVar);
+      newItems.push(newVar);
+    }
+
+    mockSyncQueue.push({
+      id: `sync_newprod_${Date.now()}`,
+      event_type: 'STOCK_RECEIVED',
+      payload: JSON.stringify({ productName: data.product_name, variantsCount: newItems.length }),
+      status: 'PENDING',
+      retry_count: 0,
+      created_at: new Date().toISOString(),
+    });
+
+    return newItems;
+  },
+
+  async getStockAdjustmentRequests(): Promise<StockAdjustmentRequest[]> {
+    return [...mockAdjustmentRequests].sort(
+      (a, b) => new Date(b.requested_at).getTime() - new Date(a.requested_at).getTime()
+    );
+  },
+
+  async requestStockAdjustment(data: {
+    variant_id: string;
+    new_quantity: number;
+    reason: StockAdjustmentReason;
+    notes?: string;
+    requested_by: string;
+  }): Promise<StockAdjustmentRequest> {
+    const variant = mockVariants.find((v) => v.id === data.variant_id);
+    if (!variant) throw new Error('Variant not found');
+
+    const previousQty = variant.quantity_on_hand;
+    const delta = data.new_quantity - previousQty;
+
+    const req: StockAdjustmentRequest = {
+      id: `adj_${Date.now()}`,
+      variant_id: variant.id,
+      product_name: variant.product_name,
+      brand: variant.brand,
+      shade_name: variant.shade_name,
+      sku: variant.sku,
+      barcode: variant.barcode,
+      previous_quantity: previousQty,
+      new_quantity: data.new_quantity,
+      quantity_delta: delta,
+      reason: data.reason,
+      notes: data.notes || null,
+      requested_by: data.requested_by,
+      requested_at: new Date().toISOString(),
+      status: 'PENDING_APPROVAL',
+    };
+
+    mockAdjustmentRequests.unshift(req);
+    return req;
+  },
+
+  async approveStockAdjustment(requestId: string, reviewerName: string): Promise<StockAdjustmentRequest> {
+    const req = mockAdjustmentRequests.find((r) => r.id === requestId);
+    if (!req) throw new Error('Adjustment request not found');
+    if (req.status !== 'PENDING_APPROVAL') throw new Error('Request already processed');
+
+    const variant = mockVariants.find((v) => v.id === req.variant_id);
+    if (variant) {
+      variant.quantity_on_hand = req.new_quantity;
+    }
+
+    req.status = 'APPROVED';
+    req.reviewed_by = reviewerName;
+    req.reviewed_at = new Date().toISOString();
+
+    mockSyncQueue.push({
+      id: `sync_adj_${req.id}`,
+      event_type: 'STOCK_ADJUSTED',
+      payload: JSON.stringify({
+        variantId: req.variant_id,
+        sku: req.sku,
+        previousQty: req.previous_quantity,
+        newQty: req.new_quantity,
+        delta: req.quantity_delta,
+        reason: req.reason,
+        approvedBy: reviewerName,
+      }),
+      status: 'PENDING',
+      retry_count: 0,
+      created_at: new Date().toISOString(),
+    });
+
+    return req;
+  },
+
+  async rejectStockAdjustment(requestId: string, reviewerName: string, reason?: string): Promise<StockAdjustmentRequest> {
+    const req = mockAdjustmentRequests.find((r) => r.id === requestId);
+    if (!req) throw new Error('Adjustment request not found');
+    if (req.status !== 'PENDING_APPROVAL') throw new Error('Request already processed');
+
+    req.status = 'REJECTED';
+    req.reviewed_by = reviewerName;
+    req.reviewed_at = new Date().toISOString();
+    req.rejection_reason = reason || 'Declined by Store Manager';
+
+    return req;
   },
 
   async getCustomers(): Promise<Customer[]> {
@@ -650,3 +1176,4 @@ export const api = {
     return true;
   },
 };
+

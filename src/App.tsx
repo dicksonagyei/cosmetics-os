@@ -7,6 +7,8 @@ import {
   PaymentMethod,
   CreateOrderResponse,
   SyncQueueItem,
+  MasterCatalogProduct,
+  StockAdjustmentRequest,
 } from './types/pos';
 import { api } from './utils/tauriBridge';
 import { useBarcodeScanner } from './hooks/useBarcodeScanner';
@@ -30,6 +32,8 @@ export function App() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [syncQueue, setSyncQueue] = useState<SyncQueueItem[]>([]);
+  const [masterProducts, setMasterProducts] = useState<MasterCatalogProduct[]>([]);
+  const [stockAdjustmentRequests, setStockAdjustmentRequests] = useState<StockAdjustmentRequest[]>([]);
 
   // Modals state
   const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
@@ -42,14 +46,18 @@ export function App() {
   // Load initial data from SQLite via Tauri Bridge
   const loadData = useCallback(async () => {
     try {
-      const [vars, custs, sync] = await Promise.all([
+      const [vars, custs, sync, master, adjustments] = await Promise.all([
         api.getVariants(),
         api.getCustomers(),
         api.getSyncQueue(),
+        api.getMasterCatalog(),
+        api.getStockAdjustmentRequests(),
       ]);
       setVariants(vars);
       setCustomers(custs);
       setSyncQueue(sync);
+      setMasterProducts(master);
+      setStockAdjustmentRequests(adjustments);
     } catch (err) {
       console.error('Failed to load initial data:', err);
     }
@@ -261,6 +269,9 @@ export function App() {
   }, []);
 
   const pendingSyncCount = syncQueue.filter((s) => s.status === 'PENDING').length;
+  const pendingAdjustmentCount = stockAdjustmentRequests.filter(
+    (s) => s.status === 'PENDING_APPROVAL'
+  ).length;
 
   return (
     <div className="flex flex-col h-screen w-screen bg-slate-950 overflow-hidden text-slate-100">
@@ -275,6 +286,7 @@ export function App() {
           onSimulateScan: scannerStatus.simulateScan,
         }}
         pendingSyncCount={pendingSyncCount}
+        pendingAdjustmentCount={pendingAdjustmentCount}
       />
 
       {/* Floating Scan Notification Banner */}
@@ -342,7 +354,26 @@ export function App() {
           </div>
         )}
 
-        {activeTab === 'inventory' && <InventoryView variants={variants} />}
+        {activeTab === 'inventory' && (
+          <InventoryView
+            variants={variants}
+            masterProducts={masterProducts}
+            stockAdjustmentRequests={stockAdjustmentRequests}
+            onImportMaster={(ids) => api.importMasterProducts(ids)}
+            onImportCsv={(rows) => api.importCsvProducts(rows)}
+            onCreateProduct={(data) => api.createProductWithVariants(data)}
+            onRequestStockAdjustment={(data) => api.requestStockAdjustment(data)}
+            onApproveStockAdjustment={async (id, reviewer) => {
+              await api.approveStockAdjustment(id, reviewer);
+              await loadData();
+            }}
+            onRejectStockAdjustment={async (id, reviewer, reason) => {
+              await api.rejectStockAdjustment(id, reviewer, reason);
+              await loadData();
+            }}
+            onRefreshData={loadData}
+          />
+        )}
 
         {activeTab === 'customers' && (
           <CustomerLedgerView

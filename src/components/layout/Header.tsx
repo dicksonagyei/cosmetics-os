@@ -10,6 +10,7 @@ import {
   Users,
   Layers,
   Zap,
+  ShieldAlert,
 } from 'lucide-react';
 
 interface HeaderProps {
@@ -22,6 +23,8 @@ interface HeaderProps {
     onSimulateScan: (barcode: string) => void;
   };
   pendingSyncCount: number;
+  pendingAdjustmentCount?: number;
+  onOpenApprovals?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -29,6 +32,8 @@ export const Header: React.FC<HeaderProps> = ({
   onTabChange,
   scannerStatus,
   pendingSyncCount,
+  pendingAdjustmentCount = 0,
+  onOpenApprovals,
 }) => {
   return (
     <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 text-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 select-none">
@@ -77,7 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
 
           <button
             onClick={() => onTabChange('inventory')}
-            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+            className={`flex items-center space-x-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all relative ${
               activeTab === 'inventory'
                 ? 'bg-gradient-to-r from-pink-600 to-rose-600 text-white shadow-md shadow-pink-600/30'
                 : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50'
@@ -88,6 +93,11 @@ export const Header: React.FC<HeaderProps> = ({
             <span className="text-[10px] font-mono px-1 py-0.2 rounded bg-white/10 text-white/80">
               F3
             </span>
+            {pendingAdjustmentCount > 0 && (
+              <span className="text-[10px] font-bold px-1.5 py-0.2 rounded-full bg-amber-500 text-slate-950 animate-pulse">
+                {pendingAdjustmentCount}
+              </span>
+            )}
           </button>
 
           <button
@@ -165,6 +175,22 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           )}
         </div>
+
+        {/* Stock Approvals Pending Pill (Audited Alert) */}
+        {pendingAdjustmentCount > 0 && (
+          <button
+            onClick={() => {
+              onTabChange('inventory');
+              if (onOpenApprovals) onOpenApprovals();
+            }}
+            className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 border border-amber-500/50 text-xs font-medium text-amber-300 hover:bg-amber-500/30 transition-all animate-pulse"
+          >
+            <ShieldAlert className="w-4 h-4 text-amber-400" />
+            <span className="text-[11px] font-bold">
+              {pendingAdjustmentCount} Approval Req
+            </span>
+          </button>
+        )}
 
         {/* Cloud Sync Health Pill */}
         <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950/60 border border-slate-800 text-xs font-medium text-slate-300">

@@ -149,3 +149,83 @@ export interface SyncQueueItem {
   retry_count: number;
   created_at: string;
 }
+
+// Master Cosmetics Catalog Definition
+export interface MasterCatalogVariant {
+  sku: string;
+  barcode: string;
+  shade_name?: string | null;
+  shade_code?: string | null;
+  size_volume?: string | null;
+  default_cost_cents: number;
+  suggested_retail_cents: number;
+  initial_stock: number;
+}
+
+export interface MasterCatalogProduct {
+  id: string;
+  name: string;
+  brand: string;
+  category: string;
+  description: string;
+  image_url: string;
+  variants: MasterCatalogVariant[];
+}
+
+// Stock Adjustment Reasons & Dual-Approval Request
+export type StockAdjustmentReason =
+  | 'DAMAGED_TESTER'
+  | 'EXPIRED'
+  | 'AUDIT_DISCREPANCY'
+  | 'RESTOCK_SHIPMENT'
+  | 'THEFT_LOSS'
+  | 'SUPPLIER_RETURN'
+  | 'OTHER';
+
+export interface StockAdjustmentRequest {
+  id: string;
+  variant_id: string;
+  product_name: string;
+  brand: string;
+  shade_name?: string | null;
+  sku: string;
+  barcode: string;
+  previous_quantity: number;
+  new_quantity: number;
+  quantity_delta: number;
+  reason: StockAdjustmentReason;
+  notes?: string | null;
+  requested_by: string;
+  requested_at: string;
+  status: 'PENDING_APPROVAL' | 'APPROVED' | 'REJECTED';
+  reviewed_by?: string | null;
+  reviewed_at?: string | null;
+  rejection_reason?: string | null;
+}
+
+// Unit of Measure (UOM) Configuration
+export interface UOMOption {
+  id: string;
+  label: string;
+  multiplier: number; // e.g. Box of 12 has multiplier 12
+  description: string;
+}
+
+// CSV / Excel Ingestion Row
+export interface CsvImportProductRow {
+  product_name: string;
+  brand: string;
+  category: string;
+  shade_name?: string;
+  shade_code?: string;
+  size_volume?: string;
+  sku: string;
+  barcode: string;
+  cost_price_cents: number;
+  selling_price_cents: number;
+  quantity_on_hand: number;
+  batch_number?: string;
+  expiry_date?: string;
+  image_url?: string;
+}
+
