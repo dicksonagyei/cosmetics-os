@@ -24,6 +24,7 @@ export interface VariantDetail {
   batch_number?: string | null;
   low_stock_threshold: number;
   quantity_on_hand: number;
+  image_url?: string | null;
 }
 
 export interface CartItem {

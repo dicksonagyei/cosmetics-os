@@ -37,6 +37,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'LOT-FB420-24A',
     low_stock_threshold: 5,
     quantity_on_hand: 24,
+    image_url: 'https://images.unsplash.com/photo-1631729371254-42c2892f0e6e?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_fenty_330',
@@ -55,6 +56,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'LOT-FB330-24A',
     low_stock_threshold: 5,
     quantity_on_hand: 18,
+    image_url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_fenty_210',
@@ -73,6 +75,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'LOT-FB210-24B',
     low_stock_threshold: 5,
     quantity_on_hand: 12,
+    image_url: 'https://images.unsplash.com/photo-1599733589046-10c005739ef9?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_fenty_120',
@@ -91,6 +94,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'LOT-FB120-24B',
     low_stock_threshold: 5,
     quantity_on_hand: 8,
+    image_url: 'https://images.unsplash.com/photo-1512496015851-a90fb38ba796?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mac_rubywoo',
@@ -109,6 +113,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MAC-RW-2024',
     low_stock_threshold: 5,
     quantity_on_hand: 35,
+    image_url: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mac_velvet_teddy',
@@ -127,6 +132,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MAC-VT-2024',
     low_stock_threshold: 5,
     quantity_on_hand: 4, // Low stock
+    image_url: 'https://images.unsplash.com/photo-1625093742435-6fa192b6fb10?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mac_whirl',
@@ -145,6 +151,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MAC-WH-2024',
     low_stock_threshold: 5,
     quantity_on_hand: 15,
+    image_url: 'https://images.unsplash.com/photo-1591360236480-4ed861025fa1?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_ord_nia_30ml',
@@ -163,6 +170,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'TO-N30-891',
     low_stock_threshold: 10,
     quantity_on_hand: 42,
+    image_url: 'https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_ord_nia_60ml',
@@ -181,6 +189,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'TO-N60-892',
     low_stock_threshold: 8,
     quantity_on_hand: 20,
+    image_url: 'https://images.unsplash.com/photo-1608248597359-251663f73685?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_cerave_236ml',
@@ -199,6 +208,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'CV-236-09',
     low_stock_threshold: 5,
     quantity_on_hand: 16,
+    image_url: 'https://images.unsplash.com/photo-1556228720-195a672e8a03?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_abh_softglam_std',
@@ -217,6 +227,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'ABH-SG-01',
     low_stock_threshold: 3,
     quantity_on_hand: 7,
+    image_url: 'https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mayb_lifter_02',
@@ -235,6 +246,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MB-LG02-1',
     low_stock_threshold: 5,
     quantity_on_hand: 25,
+    image_url: 'https://images.unsplash.com/photo-1571781926291-c477ebfd024b?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mayb_lifter_08',
@@ -253,6 +265,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MB-LG08-1',
     low_stock_threshold: 5,
     quantity_on_hand: 3, // Low stock
+    image_url: 'https://images.unsplash.com/photo-1586495777744-4413f21062fa?auto=format&fit=crop&w=300&q=80',
   },
   {
     id: 'var_mfk_br540_70ml',
@@ -271,6 +284,7 @@ const INITIAL_VARIANTS: VariantDetail[] = [
     batch_number: 'MFK-540-99',
     low_stock_threshold: 2,
     quantity_on_hand: 5,
+    image_url: 'https://images.unsplash.com/photo-1592945403244-b3fbafd7f539?auto=format&fit=crop&w=300&q=80',
   },
 ];
 
