@@ -13,7 +13,9 @@ import {
   ShieldAlert,
   Truck,
   Building2,
+  Printer,
 } from 'lucide-react';
+import { DualPrinterHardwareConfig } from '../../types/printer';
 
 interface HeaderProps {
   activeTab: 'pos' | 'inventory' | 'labels' | 'customers' | 'supply_chain' | 'sync';
@@ -28,8 +30,10 @@ interface HeaderProps {
   pendingAdjustmentCount?: number;
   inTransitTransferCount?: number;
   businessName?: string;
+  hardwareConfig?: DualPrinterHardwareConfig;
   onOpenApprovals?: () => void;
   onOpenOnboarding?: () => void;
+  onOpenHardwareSettings?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -40,8 +44,10 @@ export const Header: React.FC<HeaderProps> = ({
   pendingAdjustmentCount = 0,
   inTransitTransferCount = 0,
   businessName = 'Cosmenply Luxury Group',
+  hardwareConfig,
   onOpenApprovals,
   onOpenOnboarding,
+  onOpenHardwareSettings,
 }) => {
   return (
     <header className="bg-slate-900/90 backdrop-blur border-b border-slate-800 text-slate-200 px-4 py-2.5 flex items-center justify-between shrink-0 select-none">
@@ -238,6 +244,26 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </button>
         )}
+
+        {/* Hardware Dual-Printers Router Pill */}
+        <button
+          onClick={onOpenHardwareSettings}
+          title="Configure Gainscha Receipt & Xprinter Label Hardware"
+          className="flex items-center space-x-2 px-2.5 py-1 rounded-lg bg-slate-950/60 border border-slate-800 hover:border-pink-500/50 hover:bg-slate-800/80 transition-all text-xs font-medium text-slate-300 group"
+        >
+          <div className="relative flex items-center justify-center">
+            <Printer className="w-4 h-4 text-amber-400 group-hover:text-pink-400 transition-colors" />
+            <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          </div>
+          <div className="flex flex-col text-left">
+            <span className="text-[10px] text-slate-400 uppercase font-mono tracking-wider">
+              Dual Printers
+            </span>
+            <span className="text-[11px] font-bold text-slate-200 truncate max-w-[120px]">
+              {hardwareConfig?.receipt?.printerName ? 'Gainscha & Xprinter' : 'Printer Setup'}
+            </span>
+          </div>
+        </button>
 
         {/* Cloud Sync Health Pill */}
         <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded-lg bg-slate-950/60 border border-slate-800 text-xs font-medium text-slate-300">

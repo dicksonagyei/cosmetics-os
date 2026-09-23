@@ -39,6 +39,14 @@ import { SyncStatusView } from './components/sync/SyncStatusView';
 import { SupplyChainView } from './components/supply_chain/SupplyChainView';
 import { OnboardingWizardModal } from './components/onboarding/OnboardingWizardModal';
 import { LabelStudioView } from './components/labels/LabelStudioView';
+import { HardwareSettingsModal } from './components/settings/HardwareSettingsModal';
+import { DualPrinterHardwareConfig } from './types/printer';
+import {
+  loadPrinterConfig,
+  savePrinterConfig,
+  buildTestReceiptBytes,
+  buildTestLabelPayload,
+} from './utils/printerRouter';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<
@@ -64,6 +72,10 @@ export function App() {
     auto_deduct_roll_stock: true,
   });
   const [printHistory, setPrintHistory] = useState<LabelPrintJob[]>([]);
+
+  // Dual-Printer Hardware Router State
+  const [printerConfig, setPrinterConfig] = useState<DualPrinterHardwareConfig>(loadPrinterConfig);
+  const [isHardwareSettingsOpen, setIsHardwareSettingsOpen] = useState(false);
 
   // Multi-Tenant, Logistics & Supply Chain State
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
@@ -98,6 +110,7 @@ export function App() {
         barcodes,
         btConfig,
         pHistory,
+        sysPrinters,
       ] = await Promise.all([
         api.getVariants(),
         api.getCustomers(),
@@ -112,6 +125,7 @@ export function App() {
         api.getProductBarcodes(),
         api.getBarTenderConfig(),
         api.getLabelPrintHistory(),
+        api.getSystemPrinters(),
       ]);
       setVariants(vars);
       setCustomers(custs);
@@ -126,6 +140,9 @@ export function App() {
       setBarcodeMappings(barcodes);
       setBartenderConfig(btConfig);
       setPrintHistory(pHistory);
+      if (sysPrinters && sysPrinters.length > 0) {
+        setPrinterConfig((prev) => ({ ...prev, systemPrinters: sysPrinters }));
+      }
     } catch (err) {
       console.error('Failed to load initial data:', err);
     }
@@ -301,7 +318,14 @@ export function App() {
   // Native ESC/POS Print Trigger
   const handlePrintRaw = async (bytes: number[]) => {
     try {
-      await api.printRawEscPos(bytes);
+      const targetPrinter = printerConfig.receipt.printerName || 'POS Printer 300DPI  Series';
+      const res = await api.printRawEscPosReceipt(bytes, targetPrinter);
+      if (res.success) {
+        setScanNotification({ msg: `🧾 Receipt sent to ${targetPrinter}`, type: 'success' });
+      } else {
+        setScanNotification({ msg: `Print failed: ${res.message}`, type: 'error' });
+      }
+      setTimeout(() => setScanNotification(null), 3500);
     } catch (err) {
       console.error('Thermal print error:', err);
     }
@@ -328,10 +352,14 @@ export function App() {
       } else if (e.key === 'F7') {
         e.preventDefault();
         setActiveTab('sync');
+      } else if (e.key === 'F8') {
+        e.preventDefault();
+        setIsHardwareSettingsOpen(true);
       } else if (e.key === 'Escape') {
         setIsCheckoutModalOpen(false);
         setIsReceiptModalOpen(false);
         setIsNewCustomerModalOpen(false);
+        setIsHardwareSettingsOpen(false);
       }
     };
 
@@ -363,7 +391,10 @@ export function App() {
         pendingAdjustmentCount={pendingAdjustmentCount}
         inTransitTransferCount={inTransitTransferCount}
         businessName={onboardingState?.business.business_name || 'Cosmenply Luxury Group'}
+        hardwareConfig={printerConfig}
+        onOpenApprovals={() => {}}
         onOpenOnboarding={() => setIsOnboardingOpen(true)}
+        onOpenHardwareSettings={() => setIsHardwareSettingsOpen(true)}
       />
 
       {/* Floating Scan Notification Banner */}
@@ -564,6 +595,28 @@ export function App() {
           }}
         />
       )}
+
+      {/* Dual-Printer Hardware Router & Peripheral Diagnostics Modal */}
+      <HardwareSettingsModal
+        isOpen={isHardwareSettingsOpen}
+        onClose={() => setIsHardwareSettingsOpen(false)}
+        config={printerConfig}
+        onSaveConfig={async (newConfig) => {
+          savePrinterConfig(newConfig);
+          setPrinterConfig(newConfig);
+        }}
+        onTestReceipt={async (settings) => {
+          const bytes = buildTestReceiptBytes(settings);
+          return await api.printRawEscPosReceipt(bytes, settings.printerName);
+        }}
+        onTestLabel={async (settings) => {
+          const { payload, type } = buildTestLabelPayload(settings);
+          return await api.printRawLabelPayload(payload, type, settings.printerName);
+        }}
+        onRefreshPrinters={async () => {
+          return await api.getSystemPrinters();
+        }}
+      />
     </div>
   );
 }

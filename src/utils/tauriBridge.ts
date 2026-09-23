@@ -1934,5 +1934,77 @@ export const api = {
     }
     return [...mockPrintHistory];
   },
+
+  // Dual-Printer Hardware Router APIs
+  async getSystemPrinters(): Promise<string[]> {
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        return await invoke<string[]>('get_system_printers');
+      } catch (e) {
+        console.warn('Native printer enum failed, falling back:', e);
+      }
+    }
+    return [
+      'POS Printer 300DPI  Series',
+      'Microsoft Print to PDF',
+      'OneNote for Windows 10',
+      'Microsoft XPS Document Writer',
+    ];
+  },
+
+  async printRawEscPosReceipt(bytes: number[], printerName: string): Promise<{ success: boolean; message: string }> {
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const res = await invoke<{ success: boolean; message: string }>('print_raw_escpos_spooler', {
+          bytes,
+          printer_name: printerName,
+        });
+        return res;
+      } catch (err: unknown) {
+        console.error('Tauri raw ESC/POS spooler error:', err);
+        return { success: false, message: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    // In Web Browser / Edge Fallback: simulate immediate transmission
+    console.info(`[Hardware Router] Dispatched ${bytes.length} bytes ESC/POS to: ${printerName}`);
+    await new Promise((res) => setTimeout(res, 400));
+    return {
+      success: true,
+      message: `Sent ${bytes.length} ESC/POS bytes to receipt printer [${printerName}]. Auto-cutter triggered.`,
+    };
+  },
+
+  async printRawLabelPayload(
+    payload: string,
+    type: 'TSPL' | 'ZPL',
+    printerName: string
+  ): Promise<{ success: boolean; message: string }> {
+    if (isTauri()) {
+      try {
+        const { invoke } = await import('@tauri-apps/api/core');
+        const res = await invoke<{ success: boolean; message: string }>('print_raw_label_spooler', {
+          payload,
+          driver_type: type,
+          printer_name: printerName,
+        });
+        return res;
+      } catch (err: unknown) {
+        console.error('Tauri raw label spooler error:', err);
+        return { success: false, message: err instanceof Error ? err.message : String(err) };
+      }
+    }
+
+    // In Web Browser / Edge Fallback: simulate immediate transmission
+    console.info(`[Hardware Router] Dispatched ${type} label stream to: ${printerName}\nPayload:\n${payload}`);
+    await new Promise((res) => setTimeout(res, 400));
+    return {
+      success: true,
+      message: `Sent ${type} command stream to label printer [${printerName}]. Sticker dispatched.`,
+    };
+  },
 };
+
 
