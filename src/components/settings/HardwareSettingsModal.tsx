@@ -1,4 +1,4 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 import {
   DualPrinterHardwareConfig,
   ReceiptPrinterSettings,
@@ -543,7 +543,9 @@ export const HardwareSettingsModal: React.FC<HardwareSettingsModalProps> = ({
                   Printers connected physically to this PC via USB are automatically shared with any mobile phone, tablet, or cashier station connecting to:
                 </p>
                 <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-between font-mono text-xs">
-                  <span className="text-pink-300 font-bold">http://10.10.61.89:1420</span>
+                  <span className="text-pink-300 font-bold">
+                    {typeof window !== 'undefined' ? `${window.location.protocol}//${window.location.hostname || '10.10.60.201'}:${window.location.port || '1420'}` : 'http://10.10.60.201:1420'}
+                  </span>
                   <span className="text-[10px] text-slate-400">Local Wi-Fi Network</span>
                 </div>
               </div>
